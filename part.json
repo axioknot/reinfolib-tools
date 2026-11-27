@@ -1,0 +1,15 @@
+{
+  "name": "reinfolib-tools",
+  "version": "0.1.0",
+  "description": "不動産情報ライブラリ（国土交通省）のXIT001 APIで不動産の取引価格情報を取得し、市区町村×物件種別×四半期の件数と価格中央値を集計、可視化と通知文を作る",
+  "datasets_out": ["real_estate_transactions"],
+  "track": "money",
+  "whose_decision": "宅建業者・仲介業者の仕入れ判断（どの地域の何を、いくらまでなら買えるか）、売出価格の判断（類似物件が実際にいくらで動いたか）、出店・営業エリア判断（どの市区町村の取引が活発で、どの種別が伸びているか）に使う。根拠はアンケートや成約ベースの実際の取引価格であり、希望価格ではない。",
+  "money_distance": "近い。扱うデータ自体が実際の取引価格＝お金そのものの動きで、1件の仲介手数料が数百万円になる側の判断に直結する。ただしこのパーツ自体は蓄積と集計までで、収益化は業者向けの情報提供・道具としての提供が前提。",
+  "requires_env": ["REINFOLIB_API_KEY"],
+  "steps": {
+    "collect": "python3 reinfolib_collect.py {ax}/data/sources/reinfolib --area 13 --from-year 2024 --to-year 2025 --price-classification 01",
+    "analyze": "python3 reinfolib_aggregate.py {ax}/data/sources/reinfolib {ax}/derived/reinfolib_quarterly_summary.csv",
+    "report": "python3 reinfolib_report.py {ax}/derived/reinfolib_quarterly_summary.csv {ax}/derived/reinfolib_report.html {ax}/derived/reinfolib_notify.txt"
+  }
+}
