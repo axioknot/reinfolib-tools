@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>不動産成約価格の動向（東京都世田谷区）</title>
+<!--
+  分析基盤 共通レポートテンプレート（analysis-hub）
+  各パーツの *_report.py がこのファイルを読み、プレースホルダを置換して使う。
+    TITLE  ページタイトル（従来の <title> と同じ文）
+    KICKER 小さな英字ラベル（例: CORPORATE NUMBER / MONTHLY）
+    H1     大見出し（従来の <h1> と同じ文）
+    LEDE   導入の段落 HTML（無いパーツは空文字。例: <p class="lede">…</p>）
+    BODY   セクション群の HTML（.sec / .chart / .note / table.data を使う）
+    FOOT   末尾の出典ブロック内 HTML（出典・クレジットの段落）
+  様式の正本は DESIGN.md（Axioknot 共通基準）:
+    紙 #FAFAF7 / 墨 #1C1C1C / ネイビー #072A7C、IBM Plex Sans JP（400/700）、
+    文字段階 12/14/16/20/28、余白は 8 の倍数、見出しは番号＋英字小ラベル＋短い日本語。
+  グラフ系列パレット（凡例文との対応を保つため、この3色以外を足さない）:
+    系列1 #3B6EA5（紙に対して 5.07:1）/ 系列2 #54823F（4.33:1）/ 系列3 #A87A1D（3.67:1）
+    2026-11-27 のデザイン監査で、旧 系列2 #7FB069（2.41:1）・旧 系列3 #D9A441（2.15:1）を
+    図形の目安 3:1 以上になるよう濃色化した（色相と凡例文の対応は維持）。
+    グラフの軸線は #8A877C（3.44:1、生成側で指定）。
+  狭幅用グラフ: 生成側が .svg-wide と .svg-narrow の2つの SVG を並べた場合、
+    640px 以下では .svg-narrow のみ、印刷時は .svg-wide のみを表示する。
+-->
+<style>
+  :root{
+    --paper:#FAFAF7;
+    --ink:#1C1C1C;
+    --ink-2:#55534E;
+    --ink-3:#6E6C63;
+    --line:#DCD9CF;
+    --line-soft:#E7E4DA;
+    --accent:#072A7C;
+    --s1:#3B6EA5;
+    --s2:#54823F;
+    --s3:#A87A1D;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.8;
+    line-break:strict;
+  }
+  .page{
+    max-width:1024px;
+    margin:0 auto;
+    padding:64px 32px 96px;
+  }
+  /* ヘッダー */
+  .head{padding-bottom:32px;border-bottom:1px solid var(--line)}
+  .kicker{
+    margin:0 0 16px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.14em;
+    line-height:1.0;
+    color:var(--accent);
+  }
+  h1{
+    margin:0;
+    font-size:28px;
+    font-weight:700;
+    line-height:1.4;
+    font-feature-settings:"palt";
+    text-wrap:balance;
+  }
+  .lede{margin:24px 0 0;max-width:42em;text-wrap:pretty}
+  /* セクション（番号＋英字ラベル＋短い見出し） */
+  .sec{margin-top:64px}
+  .sec-head{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    gap:8px 16px;
+    margin-bottom:24px;
+  }
+  .sec-no{font-size:14px;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+  .sec-label{font-size:11px;font-weight:700;letter-spacing:.14em;line-height:1.0;color:var(--ink-3)}
+  .sec-head h2{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    line-height:1.4;
+    font-feature-settings:"palt";
+  }
+  /* グラフ */
+  .chart svg{display:block;width:100%;height:auto}
+  .chart svg.svg-narrow{display:none}
+  .chart text{font-family:inherit}
+  /* 凡例・注記 */
+  .legend,.note{
+    margin:16px 0 0;
+    font-size:14px;
+    line-height:1.8;
+    color:var(--ink-2);
+    max-width:42em;
+    text-wrap:pretty;
+  }
+  /* 数値表（罫は横のみ） */
+  .table-wrap{overflow-x:auto}
+  table.data{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+    line-height:1.6;
+    font-variant-numeric:tabular-nums;
+  }
+  table.data th,table.data td{
+    padding:8px 16px 8px 0;
+    text-align:right;
+    border-bottom:1px solid var(--line-soft);
+    white-space:nowrap;
+  }
+  table.data th:first-child,table.data td:first-child{text-align:left;padding-left:0}
+  table.data th.txt,table.data td.txt{text-align:left}
+  table.data thead th{
+    font-weight:700;
+    color:var(--ink);
+    border-bottom:1px solid var(--line);
+  }
+  table.data tbody tr:last-child td{border-bottom:none}
+  /* 末尾（出典・クレジット） */
+  .foot{
+    margin-top:96px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    line-height:1.8;
+    color:var(--ink-2);
+  }
+  .foot p{margin:0 0 8px;max-width:42em;text-wrap:pretty}
+  .foot p:last-child{margin-bottom:0}
+  /* モバイル */
+  @media (max-width:640px){
+    .page{padding:40px 16px 64px}
+    .sec{margin-top:48px}
+    .foot{margin-top:64px}
+    table.data th,table.data td{padding-right:12px}
+    .chart svg.svg-wide{display:none}
+    .chart svg.svg-narrow{display:block}
+  }
+  /* 印刷 */
+  @media print{
+    @page{margin:16mm}
+    body{background:#fff}
+    .page{max-width:none;padding:0}
+    .sec{margin-top:32px;break-inside:avoid}
+    .head{break-after:avoid}
+    .chart,.chart *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .chart svg.svg-narrow{display:none}
+    .chart svg.svg-wide{display:block}
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="head">
+    <p class="kicker">REAL ESTATE CONTRACTED PRICES / QUARTERLY</p>
+    <h1>不動産成約価格の動向 — 東京都世田谷区（四半期ごとの成約件数）</h1>
+    <p class="lede">全国47都道府県、2021年第1四半期〜2025年第4四半期、成約価格情報（priceClassification=02）627,749件。種別は中古マンション等と宅地(土地と建物)の2種のみで、価格は実際に契約された成約価格（総額）です。m2単価は当方のデータでは値が入っていません。</p>
+  </header>
+  <section class="sec"><div class="sec-head"><span class="sec-no">01</span><span class="sec-label">CHART</span><h2>四半期ごとの成約件数 — 東京都世田谷区</h2></div><div class="chart"><svg viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg" role="img"><line x1="44" y1="276" x2="916" y2="276" stroke="#8A877C"/><rect x="45.0" y="155.7" width="41.6" height="120.3" fill="#3b6ea5"><title>2021Q1 中古マンション等: 308件</title></rect><rect x="45.0" y="119.4" width="41.6" height="36.3" fill="#54823F"><title>2021Q1 宅地(土地と建物): 93件</title></rect><text x="65.8" y="292" font-size="12" text-anchor="middle" fill="#55534E">2021Q1</text><rect x="88.6" y="142.8" width="41.6" height="133.2" fill="#3b6ea5"><title>2021Q2 中古マンション等: 341件</title></rect><rect x="88.6" y="98.7" width="41.6" height="44.1" fill="#54823F"><title>2021Q2 宅地(土地と建物): 113件</title></rect><text x="109.4" y="292" font-size="12" text-anchor="middle" fill="#55534E">2021Q2</text><rect x="132.2" y="161.6" width="41.6" height="114.4" fill="#3b6ea5"><title>2021Q3 中古マンション等: 293件</title></rect><rect x="132.2" y="121.3" width="41.6" height="40.2" fill="#54823F"><title>2021Q3 宅地(土地と建物): 103件</title></rect><text x="153.0" y="292" font-size="12" text-anchor="middle" fill="#55534E">2021Q3</text><rect x="175.8" y="148.3" width="41.6" height="127.7" fill="#3b6ea5"><title>2021Q4 中古マンション等: 327件</title></rect><rect x="175.8" y="112.0" width="41.6" height="36.3" fill="#54823F"><title>2021Q4 宅地(土地と建物): 93件</title></rect><text x="196.6" y="292" font-size="12" text-anchor="middle" fill="#55534E">2021Q4</text><rect x="219.4" y="127.6" width="41.6" height="148.4" fill="#3b6ea5"><title>2022Q1 中古マンション等: 380件</title></rect><rect x="219.4" y="94.8" width="41.6" height="32.8" fill="#54823F"><title>2022Q1 宅地(土地と建物): 84件</title></rect><text x="240.2" y="292" font-size="12" text-anchor="middle" fill="#55534E">2022Q1</text><rect x="263.0" y="145.2" width="41.6" height="130.8" fill="#3b6ea5"><title>2022Q2 中古マンション等: 335件</title></rect><rect x="263.0" y="107.3" width="41.6" height="37.9" fill="#54823F"><title>2022Q2 宅地(土地と建物): 97件</title></rect><text x="283.8" y="292" font-size="12" text-anchor="middle" fill="#55534E">2022Q2</text><rect x="306.6" y="162.3" width="41.6" height="113.7" fill="#3b6ea5"><title>2022Q3 中古マンション等: 291件</title></rect><rect x="306.6" y="130.7" width="41.6" height="31.6" fill="#54823F"><title>2022Q3 宅地(土地と建物): 81件</title></rect><text x="327.4" y="292" font-size="12" text-anchor="middle" fill="#55534E">2022Q3</text><rect x="350.2" y="148.3" width="41.6" height="127.7" fill="#3b6ea5"><title>2022Q4 中古マンション等: 327件</title></rect><rect x="350.2" y="114.7" width="41.6" height="33.6" fill="#54823F"><title>2022Q4 宅地(土地と建物): 86件</title></rect><text x="371.0" y="292" font-size="12" text-anchor="middle" fill="#55534E">2022Q4</text><rect x="393.8" y="149.8" width="41.6" height="126.2" fill="#3b6ea5"><title>2023Q1 中古マンション等: 323件</title></rect><rect x="393.8" y="123.7" width="41.6" height="26.2" fill="#54823F"><title>2023Q1 宅地(土地と建物): 67件</title></rect><text x="414.6" y="292" font-size="12" text-anchor="middle" fill="#55534E">2023Q1</text><rect x="437.4" y="152.2" width="41.6" height="123.8" fill="#3b6ea5"><title>2023Q2 中古マンション等: 317件</title></rect><rect x="437.4" y="124.1" width="41.6" height="28.1" fill="#54823F"><title>2023Q2 宅地(土地と建物): 72件</title></rect><text x="458.2" y="292" font-size="12" text-anchor="middle" fill="#55534E">2023Q2</text><rect x="481.0" y="166.6" width="41.6" height="109.4" fill="#3b6ea5"><title>2023Q3 中古マンション等: 280件</title></rect><rect x="481.0" y="140.1" width="41.6" height="26.6" fill="#54823F"><title>2023Q3 宅地(土地と建物): 68件</title></rect><text x="501.8" y="292" font-size="12" text-anchor="middle" fill="#55534E">2023Q3</text><rect x="524.6" y="155.3" width="41.6" height="120.7" fill="#3b6ea5"><title>2023Q4 中古マンション等: 309件</title></rect><rect x="524.6" y="125.6" width="41.6" height="29.7" fill="#54823F"><title>2023Q4 宅地(土地と建物): 76件</title></rect><text x="545.4" y="292" font-size="12" text-anchor="middle" fill="#55534E">2023Q4</text><rect x="568.2" y="140.9" width="41.6" height="135.1" fill="#3b6ea5"><title>2024Q1 中古マンション等: 346件</title></rect><rect x="568.2" y="104.9" width="41.6" height="35.9" fill="#54823F"><title>2024Q1 宅地(土地と建物): 92件</title></rect><text x="589.0" y="292" font-size="12" text-anchor="middle" fill="#55534E">2024Q1</text><rect x="611.8" y="156.5" width="41.6" height="119.5" fill="#3b6ea5"><title>2024Q2 中古マンション等: 306件</title></rect><rect x="611.8" y="117.8" width="41.6" height="38.7" fill="#54823F"><title>2024Q2 宅地(土地と建物): 99件</title></rect><text x="632.6" y="292" font-size="12" text-anchor="middle" fill="#55534E">2024Q2</text><rect x="655.4" y="163.9" width="41.6" height="112.1" fill="#3b6ea5"><title>2024Q3 中古マンション等: 287件</title></rect><rect x="655.4" y="134.2" width="41.6" height="29.7" fill="#54823F"><title>2024Q3 宅地(土地と建物): 76件</title></rect><text x="676.2" y="292" font-size="12" text-anchor="middle" fill="#55534E">2024Q3</text><rect x="699.0" y="140.9" width="41.6" height="135.1" fill="#3b6ea5"><title>2024Q4 中古マンション等: 346件</title></rect><rect x="699.0" y="104.9" width="41.6" height="35.9" fill="#54823F"><title>2024Q4 宅地(土地と建物): 92件</title></rect><text x="719.8" y="292" font-size="12" text-anchor="middle" fill="#55534E">2024Q4</text><rect x="742.6" y="105.3" width="41.6" height="170.7" fill="#3b6ea5"><title>2025Q1 中古マンション等: 437件</title></rect><rect x="742.6" y="44.0" width="41.6" height="61.3" fill="#54823F"><title>2025Q1 宅地(土地と建物): 157件</title></rect><text x="763.4" y="292" font-size="12" text-anchor="middle" fill="#55534E">2025Q1</text><rect x="786.2" y="99.1" width="41.6" height="176.9" fill="#3b6ea5"><title>2025Q2 中古マンション等: 453件</title></rect><rect x="786.2" y="44.4" width="41.6" height="54.7" fill="#54823F"><title>2025Q2 宅地(土地と建物): 140件</title></rect><text x="807.0" y="292" font-size="12" text-anchor="middle" fill="#55534E">2025Q2</text><rect x="829.8" y="108.1" width="41.6" height="167.9" fill="#3b6ea5"><title>2025Q3 中古マンション等: 430件</title></rect><rect x="829.8" y="46.7" width="41.6" height="61.3" fill="#54823F"><title>2025Q3 宅地(土地と建物): 157件</title></rect><text x="850.6" y="292" font-size="12" text-anchor="middle" fill="#55534E">2025Q3</text><rect x="873.4" y="114.3" width="41.6" height="161.7" fill="#3b6ea5"><title>2025Q4 中古マンション等: 414件</title></rect><rect x="873.4" y="53.8" width="41.6" height="60.5" fill="#54823F"><title>2025Q4 宅地(土地と建物): 155件</title></rect><text x="894.2" y="292" font-size="12" text-anchor="middle" fill="#55534E">2025Q4</text></svg></div><p class="legend">凡例: #3b6ea5=中古マンション等、#54823F=宅地(土地と建物)</p></section><section class="sec"><div class="sec-head"><span class="sec-no">02</span><span class="sec-label">COMPARISON</span><h2>取引価格情報（01）との比較</h2></div><p>取引価格情報（priceClassification=01、不動産取引のアンケート等に基づく価格）と、同じ「都道府県 × 市区町村 × 種別 × 四半期」で重なるグループは 10,205 件ありました（重なりは取引価格情報の対象期間 2024〜2025年内）。そのグループ同士で総額中央値を比べると、成約価格 ÷ 取引価格の比の中央値は 1.014 で、大きな開きはありませんでした。</p><table><thead><tr><th>種別</th><th>グループ数</th><th>比の中央値（成約 ÷ 取引）</th></tr></thead><tbody><tr><td>宅地(土地と建物)</td><td>6,331</td><td>0.980</td></tr><tr><td>中古マンション等</td><td>3,874</td><td>1.083</td></tr></tbody></table><p>これは同一物件の値引き率ではなく、同じ地域・種別・四半期の中央値同士の比較です。取引価格情報には宅地(土地)・農地・林地も含まれますが、成約価格情報の種別は2種のみのため、比較はその2種に限られます。</p></section>
+  <footer class="foot">
+    <p>出典: 国土交通省 不動産情報ライブラリ（https://www.reinfolib.mlit.go.jp/）</p><p>「成約価格情報」「不動産取引価格情報」（国土交通省）をもとに集計・加工して作成</p><p>このサービスは、国土交通省の不動産情報ライブラリのAPI機能を使用していますが、提供情報の最新性、正確性、完全性等が保証されたものではありません</p>
+  </footer>
+</main>
+</body>
+</html>

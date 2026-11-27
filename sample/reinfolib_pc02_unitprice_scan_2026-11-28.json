@@ -1,0 +1,11 @@
+{
+  "scan": "UnitPrice non-empty count over all pc02 raw records",
+  "date": "2026-11-28",
+  "target_dir": "data/sources/reinfolib/pc02/",
+  "file_pattern": "xit001_*_pc02.json",
+  "files": 940,
+  "records_total": 627749,
+  "records_with_unitprice_field": 627749,
+  "records_with_nonempty_unitprice": 0,
+  "method": "各ファイルの payload[0].data を全レコード走査し、UnitPrice が None・空文字以外のものを数えた（このJSON自体がその走査の記録）"
+}
