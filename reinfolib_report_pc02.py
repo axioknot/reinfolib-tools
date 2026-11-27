@@ -11,6 +11,14 @@ pc01（取引価格情報）用の reinfolib_report.py と対になるスクリ�
   - UnitPrice（m2単価）は全レコードで空。当方の取得範囲では単価の値が入っていないため、
     価格の指標は成約価格（総額）の中央値を使う
 
+生成する文言について:
+  - 対象期間・種別・単価の有無などの文言は、入力CSVの実データから
+    組み立てる（特定の期間や所見を固定では書かない）
+  - 比較の節の「大きな開きはありませんでした」は、成約 ÷ 取引の
+    比の中央値が 0.90〜1.10 の範囲（1からの開きが10%以内）に
+    ある場合だけ付ける（この道具の評価バンド）。範囲外の場合は
+    開きの大きさを数値（%）で述べるだけにする
+
 使い方: python3 reinfolib_report_pc02.py 成約集計.csv 取引集計.csv 出力.html 通知文.txt
 出典: 国土交通省 不動産情報ライブラリ
 API利用規約 第7条のクレジット表示をHTML末尾に入れる。
@@ -41,6 +49,34 @@ def load(path):
     return rows
 
 
+def fmt_period(p):
+    year, q = p.split("Q")
+    return "%s年第%s四半期" % (year, q)
+
+
+def period_span(periods):
+    """四半期の並び（ソート済み）から期間の表記を作る。"""
+    if not periods:
+        return "期間不明"
+    if periods[0] == periods[-1]:
+        return fmt_period(periods[0])
+    return "%s〜%s" % (fmt_period(periods[0]), fmt_period(periods[-1]))
+
+
+def gap_text(med_ratio):
+    """比の中央値の評価文を、値そのものから組み立てる。
+
+    評価バンド（この道具の規則）: 比の中央値が 0.90〜1.10 の範囲
+    （1からの開きが10%以内）なら「大きな開きはありませんでした」
+    とし、それ以外は開きの大きさを数値で述べるだけにする。
+    """
+    dev = abs(med_ratio - 1.0) * 100
+    if 0.90 <= med_ratio <= 1.10:
+        return ("比の中央値は %.3f で、1からの開きは約%.1f%%と小さく、"
+                "大きな開きはありませんでした" % (med_ratio, dev))
+    return "比の中央値は %.3f で、1からの開きは約%.1f%%でした" % (med_ratio, dev)
+
+
 def coverage_text(rows):
     """レポートの対象範囲の表記を、集計CSVの実データから組み立てる。
 
@@ -50,17 +86,8 @@ def coverage_text(rows):
     prefs = {r["prefecture"] for r in rows}
     periods = sorted({r["period"] for r in rows if r["period"] != "unknown"})
     total = sum(r["count"] for r in rows)
-
-    def fmt(p):
-        year, q = p.split("Q")
-        return "%s年第%s四半期" % (year, q)
-
-    if periods:
-        span = fmt(periods[0]) if periods[0] == periods[-1] else "%s〜%s" % (fmt(periods[0]), fmt(periods[-1]))
-    else:
-        span = "期間不明"
     area = "全国47都道府県" if len(prefs) == 47 else "%d都道府県" % len(prefs)
-    return "%s、%s、成約価格情報（priceClassification=02）%s件" % (area, span, format(total, ","))
+    return "%s、%s、成約価格情報（priceClassification=02）%s件" % (area, period_span(periods), format(total, ","))
 
 
 def svg_bars(period_counts, periods, types):
@@ -192,13 +219,19 @@ def main(src, pc01_src, html_out, notify_out):
             sign = "+" if dm >= 0 else ""
             seg += "（前四半期比 %s%s万円）" % (sign, format(round(dm), ","))
         lines.append(seg)
-    lines.append("※ 当方のデータでは m2単価に値が1件も入っていないため、価格は総額の中央値で示す")
+    no_unit_price = all(r["median_unit_price"] is None for r in rows)
+    if no_unit_price:
+        lines.append("※ 当方のデータでは m2単価に値が1件も入っていないため、価格は総額の中央値で示す")
     lines.append(SOURCE)
     lines.append(processed)
     notify_text = "\n".join(lines)
 
-    lede = ('<p class="lede">%s。種別は中古マンション等と宅地(土地と建物)の2種のみで、'
-            '価格は実際に契約された成約価格（総額）です。m2単価は当方のデータでは値が入っていません。</p>' % coverage_text(rows))
+    all_types = sorted({r["property_type"] for r in rows})
+    unit_note = ("m2単価は当方のデータでは値が入っていません。" if no_unit_price
+                 else "m2単価の中央値も集計しています。")
+    lede = ('<p class="lede">%s。種別は%sの%d種のみで、'
+            '価格は実際に契約された成約価格（総額）です。%s</p>'
+            % (coverage_text(rows), "と".join(all_types), len(all_types), unit_note))
 
     legend = "、".join("%s=%s" % (COLORS[i % len(COLORS)], t) for i, t in enumerate(types))
     chart = '<div class="chart">%s</div>' % svg_bars(period_counts, periods, types)
@@ -211,17 +244,18 @@ def main(src, pc01_src, html_out, notify_out):
         trs = "".join(
             "<tr><td>%s</td><td>%s</td><td>%.3f</td></tr>" % (t, format(len(rs), ","), statistics.median(rs))
             for t, rs in sorted(by_type.items(), key=lambda kv: -len(kv[1])))
+        pc01_periods = sorted({r["period"] for r in pc01_rows if r["period"] != "unknown"})
         comp = ('<p>取引価格情報（priceClassification=01、不動産取引のアンケート等に基づく価格）と、'
                 '同じ「都道府県 × 市区町村 × 種別 × 四半期」で重なるグループは %s 件ありました'
-                '（重なりは取引価格情報の対象期間 2024〜2025年内）。'
-                'そのグループ同士で総額中央値を比べると、成約価格 ÷ 取引価格の比の中央値は %.3f で、'
-                '大きな開きはありませんでした。</p>'
+                '（重なりは取引価格情報の対象期間 %s の範囲内）。'
+                'そのグループ同士で総額中央値を比べると、成約価格 ÷ 取引価格の%s。</p>'
                 '<table><thead><tr><th>種別</th><th>グループ数</th><th>比の中央値（成約 ÷ 取引）</th></tr></thead>'
                 '<tbody>%s</tbody></table>'
                 '<p>これは同一物件の値引き率ではなく、同じ地域・種別・四半期の中央値同士の比較です。'
-                '取引価格情報には宅地(土地)・農地・林地も含まれますが、成約価格情報の種別は2種のみのため、'
-                '比較はその2種に限られます。</p>'
-                % (format(len(overlap), ","), med_ratio, trs))
+                '取引価格情報には宅地(土地)・農地・林地も含まれますが、成約価格情報の種別は%d種のみのため、'
+                '比較はその%d種に限られます。</p>'
+                % (format(len(overlap), ","), period_span(pc01_periods), gap_text(med_ratio), trs,
+                   len(all_types), len(all_types)))
     else:
         comp = ('<p>取引価格情報（priceClassification=01）と同じ「都道府県 × 市区町村 × 種別 × 四半期」で'
                 '重なるグループは %s 件で、比較に足る重なりがありませんでした。</p>' % format(len(overlap), ","))
