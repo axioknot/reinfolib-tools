@@ -24,7 +24,9 @@ import sys
 from collections import defaultdict
 
 CREDIT = "このサービスは、国土交通省の不動産情報ライブラリのAPI機能を使用していますが、提供情報の最新性、正確性、完全性等が保証されたものではありません"
-SOURCE = "出典: 「成約価格情報」（国土交通省 不動産情報ライブラリ https://www.reinfolib.mlit.go.jp/）を集計・加工して作成"
+SOURCE = "出典: 国土交通省 不動産情報ライブラリ（https://www.reinfolib.mlit.go.jp/）"
+PROCESSED = "「成約価格情報」（国土交通省）をもとに集計・加工して作成"
+PROCESSED_BOTH = "「成約価格情報」「不動産取引価格情報」（国土交通省）をもとに集計・加工して作成"
 COLORS = ["#3b6ea5", "#54823F", "#A87A1D"]
 
 
@@ -131,14 +133,16 @@ def comparison(pc02_rows, pc01_rows):
 def main(src, pc01_src, html_out, notify_out):
     rows = load(src)
     pc01_rows = load(pc01_src) if pc01_src and os.path.exists(pc01_src) else []
+    processed = PROCESSED_BOTH if pc01_rows else PROCESSED
     if not rows:
         notify_text = "\n".join([
             "【不動産成約価格・四半期まとめ】",
             "集計データがまだありません。",
             SOURCE,
+            processed,
         ])
         body = '<section class="sec"><p>集計データがまだありません。</p></section>'
-        foot = "<p>%s</p><p>%s</p>" % (SOURCE, CREDIT)
+        foot = "<p>%s</p><p>%s</p><p>%s</p>" % (SOURCE, processed, CREDIT)
         html = render_page("不動産成約価格の集計", "REAL ESTATE CONTRACTED PRICES / QUARTERLY",
                            "不動産成約価格の集計", "", body, foot)
         with open(html_out, "w", encoding="utf-8") as f:
@@ -190,6 +194,7 @@ def main(src, pc01_src, html_out, notify_out):
         lines.append(seg)
     lines.append("※ 当方のデータでは m2単価に値が1件も入っていないため、価格は総額の中央値で示す")
     lines.append(SOURCE)
+    lines.append(processed)
     notify_text = "\n".join(lines)
 
     lede = ('<p class="lede">%s。種別は中古マンション等と宅地(土地と建物)の2種のみで、'
@@ -222,7 +227,7 @@ def main(src, pc01_src, html_out, notify_out):
                 '重なるグループは %s 件で、比較に足る重なりがありませんでした。</p>' % format(len(overlap), ","))
     body += section("02", "COMPARISON", "取引価格情報（01）との比較", comp)
 
-    foot = "<p>%s</p><p>%s</p>" % (SOURCE, CREDIT)
+    foot = "<p>%s</p><p>%s</p><p>%s</p>" % (SOURCE, processed, CREDIT)
     html = render_page("不動産成約価格の動向（%s%s）" % focus, "REAL ESTATE CONTRACTED PRICES / QUARTERLY",
                        "不動産成約価格の動向 — %s%s（四半期ごとの成約件数）" % focus, lede, body, foot)
     with open(html_out, "w", encoding="utf-8") as f:

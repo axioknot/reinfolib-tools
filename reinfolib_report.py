@@ -19,7 +19,8 @@ import urllib.request
 from collections import defaultdict
 
 CREDIT = "このサービスは、国土交通省の不動産情報ライブラリのAPI機能を使用していますが、提供情報の最新性、正確性、完全性等が保証されたものではありません"
-SOURCE = "出典: 国土交通省 不動産情報ライブラリ（https://www.reinfolib.mlit.go.jp/）をもとに作成"
+SOURCE = "出典: 国土交通省 不動産情報ライブラリ（https://www.reinfolib.mlit.go.jp/）"
+PROCESSED = "「不動産取引価格情報」（国土交通省）をもとに集計・加工して作成"
 COLORS = ["#3b6ea5", "#54823F", "#A87A1D"]
 
 
@@ -92,9 +93,10 @@ def main(src, html_out, notify_out):
             "【不動産取引価格・四半期まとめ】",
             "集計データがまだありません。APIキーの発行と収集の実行が前提です。",
             SOURCE,
+            PROCESSED,
         ])
         body = '<section class="sec"><p>集計データがまだありません。</p></section>'
-        foot = "<p>%s</p><p>%s</p>" % (SOURCE, CREDIT)
+        foot = "<p>%s</p><p>%s</p><p>%s</p>" % (SOURCE, PROCESSED, CREDIT)
         html = render_page("不動産取引価格の集計", "REAL ESTATE TRANSACTIONS / QUARTERLY",
                            "不動産取引価格の集計", "", body, foot)
         with open(html_out, "w", encoding="utf-8") as f:
@@ -145,13 +147,14 @@ def main(src, html_out, notify_out):
             seg += "（前四半期比 %s%.1f万円）" % (sign, dm)
         lines.append(seg)
     lines.append(SOURCE)
+    lines.append(PROCESSED)
     notify_text = "\n".join(lines)
 
     legend = "、".join("%s=%s" % (COLORS[i % len(COLORS)], t) for i, t in enumerate(types))
     chart = '<div class="chart">%s</div>' % svg_bars(period_counts, periods, types)
     body = section("01", "CHART", "四半期ごとの取引件数",
                    chart + '<p class="legend">凡例: %s</p>' % legend)
-    foot = "<p>%s</p><p>%s</p>" % (SOURCE, CREDIT)
+    foot = "<p>%s</p><p>%s</p><p>%s</p>" % (SOURCE, PROCESSED, CREDIT)
     html = render_page("不動産取引価格の動向（%s%s）" % focus, "REAL ESTATE TRANSACTIONS / QUARTERLY",
                        "不動産取引価格の動向 — %s%s（四半期ごとの取引件数）" % focus, "", body, foot)
     with open(html_out, "w", encoding="utf-8") as f:
