@@ -87,23 +87,30 @@ def main():
                 if pc:
                     params["priceClassification"] = pc
                 try:
-                    records = fetch_one(key, params)
+                    payload = fetch_one(key, params)
                 except urllib.error.HTTPError as e:
                     body = e.read().decode("utf-8", "ignore")[:300]
                     print(f"HTTP {e.code} area={area} {year}Q{quarter}: {body}", file=sys.stderr)
                     sys.exit(1)
-                if not isinstance(records, list):
-                    records = [records]
+                if isinstance(payload, dict) and isinstance(payload.get("data"), list):
+                    records = [payload]
+                    n_records = len(payload["data"])
+                elif isinstance(payload, list):
+                    records = payload
+                    n_records = len(payload)
+                else:
+                    records = [payload]
+                    n_records = 1
                 fname = f"xit001_area{area}_{year}q{quarter}_pc{pc or 'all'}.json"
                 path = os.path.join(out_dir, fname)
                 with open(path, "w", encoding="utf-8") as f:
                     json.dump(records, f, ensure_ascii=False)
                 rec = {"at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "params": params,
-                       "records": len(records), "file": fname}
+                       "records": n_records, "file": fname}
                 with open(log_path, "a", encoding="utf-8") as f:
                     f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-                print(f"area={area} {year}Q{quarter}: {len(records)} records -> {fname}")
-                total += len(records)
+                print(f"area={area} {year}Q{quarter}: {n_records} records -> {fname}")
+                total += n_records
                 time.sleep(1)
     print(f"total records: {total}")
 

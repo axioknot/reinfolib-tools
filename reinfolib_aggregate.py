@@ -40,7 +40,13 @@ def main(src_dir, dst):
             data = json.load(f)
         if isinstance(data, dict):
             data = [data]
-        for r in data:
+        records = []
+        for item in data:
+            if isinstance(item, dict) and isinstance(item.get("data"), list):
+                records.extend(item["data"])
+            else:
+                records.append(item)
+        for r in records:
             total += 1
             m = PERIOD_RE.search(str(r.get("Period", "")))
             period = f"{m.group(1)}Q{m.group(2)}" if m else "unknown"
